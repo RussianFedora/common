@@ -70,7 +70,7 @@ class RFRGetSources:
 		for spec in os.listdir(self.current_dir):
 			if 'spec' not in spec: # == '.' or spec == '..':
 				continue
-			#print "Some spec-file: %s" % spec
+			print "Some spec-file: %s" % spec
 			params = {}
 			spec_f = open(os.path.join(self.current_dir, spec), 'r')
 			for line in spec_f:
@@ -81,14 +81,12 @@ class RFRGetSources:
 				except:
 					continue
 				params[key.replace(':', '').lower()] = value
-			#print params
-			name = params['name']
-			version = params['version']
 			for p in params.keys():
-				if '://' in params[p] and ('source' in params[p] or 'patch' in params[p]) and p.lower() != 'url':
+				if '://' in params[p] and ('source' in p.lower() or 'patch' in p.lower()) and p.lower() != 'url':
 					url_raw = params[p].replace('%{','%(').replace('}',')s') % params
+					#print url_raw
 					u = urllib.urlopen(url_raw)
-					filename = self._filename_from_url(url_raw)
+					filename = self._filename_from_url(u.url)
 					if len(filename) != 0:
 						sources_list[u.url] = filename
 						data = u.read()
