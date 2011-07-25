@@ -74,13 +74,26 @@ class RFRGetSources:
 			params = {}
 			spec_f = open(os.path.join(self.current_dir, spec), 'r')
 			for line in spec_f:
-				if ':' not in line:
+				if (':' not in line) and ('define' not in line):
 					continue
-				try:
-					key, value = line.split()
-				except:
-					continue
+				
+				if (':' in line):
+					try:
+						key, value = line.split()
+					except:
+						continue
+				elif ('define' in line):
+					try:
+						define, key, value = line.split()
+					except:
+						continue
+					if define != '%define':
+						continue
 				params[key.replace(':', '').lower()] = value
+			# fix inbound params
+			for par in params.keys():
+				if ('%' in params[par]) and ('?' not in params[par]):
+					params[par] = params[par].replace('%{','%(').replace('}',')s') % params
 			for p in params.keys():
 				if '://' in params[p] and ('source' in p.lower() or 'patch' in p.lower()) and p.lower() != 'url':
 					url_raw = params[p].replace('%{','%(').replace('}',')s') % params
