@@ -92,7 +92,8 @@ class RFRGetSources:
 				params[key.replace(':', '').lower()] = value
 			# fix inbound params
 			for par in params.keys():
-				if ('%' in params[par]) and ('?' not in params[par]):
+				if ('%' in params[par]) and ('?' not in params[par]) and ('buildroot' != par.lower()):
+					print "%s = %s" % (par, params[par])
 					params[par] = params[par].replace('%{','%(').replace('}',')s') % params
 			for p in params.keys():
 				if '://' in params[p] and ('source' in p.lower() or 'patch' in p.lower()) and p.lower() != 'url':
