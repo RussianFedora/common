@@ -100,8 +100,6 @@ class RFRGetSources:
                         continue
 		    params[par] = raw_param
             for p in params.keys():
-                print("%s=%s" % (p, params[p]))
-            for p in params.keys():
                 if '://' in params[p] and ('source' in p.lower() or 'patch' in p.lower()) and p.lower() != 'url':
                     url_raw = params[p].replace('%{','%(').replace('}',')s') % params
                     #print url_raw
