@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys
 import os, os.path
@@ -7,6 +8,8 @@ import hashlib
 import urllib
 
 class RFRGetSources:
+    debug_mode = 0
+
     def __init__(self):
         self.current_dir = os.curdir
         self.sources = {}
@@ -16,13 +19,13 @@ class RFRGetSources:
         self.user_script_name = os.path.join(self.current_dir, 'get_sources.sh')
 
     def check(self):
-        print("Begin check")
+        self.debug("Begin check")
         if self.has_error:
             return False
         if len(self.sources.keys()) == 0:
             return True
 
-        print('check user script')
+        self.debug('check user script')
         if self.check_user_script():
             return self.run_user_script()
         else:
@@ -33,11 +36,11 @@ class RFRGetSources:
     
     def run_user_script(self):
         if os.path.exists(self.user_script_name):
-            print "Try run %s" % ('/bin/sh %s' % self.user_script_name)
+            self.debug("Try run %s" % ('/bin/sh %s' % self.user_script_name))
             try:
                 os.system('/bin/sh %s' % self.user_script_name)
             except:
-                print('script fail')
+                self.debg('script fail')
                 return False
             return True
         return False
@@ -46,7 +49,7 @@ class RFRGetSources:
         sources_f = os.path.join(self.current_dir, 'sources')
         if not os.path.exists(sources_f):
             self.has_error = True
-            print('File \'sources\' not found.')
+            self.debug('File \'sources\' not found.')
         try:
             s = open(sources_f, 'r')
         except:
@@ -70,10 +73,12 @@ class RFRGetSources:
         for spec in os.listdir(self.current_dir):
             if 'spec' not in spec: # == '.' or spec == '..':
                 continue
-            print "Some spec-file: %s" % spec
+            self.debug("Some spec-file: %s" % spec)
             params = {}
             spec_f = open(os.path.join(self.current_dir, spec), 'r')
             for line in spec_f:
+                if (len(line) == 0) or (line[0] == '#'):
+                    continue
                 if (':' not in line) and ('define' not in line) and ('global' not in line):
                     continue
                 
@@ -81,7 +86,13 @@ class RFRGetSources:
                     try:
                         key, value = line.split()
                     except:
-                        continue
+                        list_of_split = line.split()
+                        if len(list_of_split) > 0:
+                            key = list_of_split[0]
+                            value = str(' ').join(list_of_split[1:])
+                        else:
+                            continue
+
                 elif ('define' in line) or ('global' in line):
                     try:
                         define, key, value = line.split()
@@ -102,7 +113,7 @@ class RFRGetSources:
             for p in params.keys():
                 if '://' in params[p] and ('source' in p.lower() or 'patch' in p.lower()) and p.lower() != 'url':
                     url_raw = params[p].replace('%{','%(').replace('}',')s') % params
-                    #print url_raw
+                    self.debug(url_raw)
                     u = urllib.urlopen(url_raw)
                     filename = self._filename_from_url(u.url)
                     if len(filename) != 0:
@@ -134,12 +145,23 @@ class RFRGetSources:
                 res = res and check_sum_s != check_sum_f
         return res
 
+    def debug(self, msg, force = False):
+        if (self.debug_mode != 0) or (force == True):
+            print("rfr_get_source debug: %s" % msg)
 
 if __name__ == '__main__':
     rfr = RFRGetSources()
-    print("Begin")
-    if not rfr.check():
-        print "Abnormal exit"
+    rfr.debug("Begin")
+    
+    try:
+        check_status = rfr.check()
+    except:
+        rfr.debug("Error in download script. Please contact with author!", True)
         os._exit(1)
+
+    if not check_status:
+        rfr.debug("Abnormal exit", True)
+        os._exit(1)
+    rfr.debug("End. OK.")
     os._exit(0)
 
