@@ -115,7 +115,8 @@ class RFRGetSources:
                     url_raw = params[p].replace('%{','%(').replace('}',')s') % params
                     self.debug(url_raw)
                     u = urllib.urlopen(url_raw)
-                    filename = self._filename_from_url(u.url)
+                    # get filename from source URL in spec
+                    filename = self._filename_from_url(url_raw)   #u.url)
                     if len(filename) != 0:
                         sources_list[u.url] = filename
                         data = u.read()
